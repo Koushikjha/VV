@@ -1,0 +1,22 @@
+# Only the frontend goes through Ingress. The backend is deliberately
+# NodePort'd instead — see the comment in backend/service.yaml for why.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: echo-ingress
+  namespace: echo
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: echo.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: echo-frontend
+                port:
+                  number: 80

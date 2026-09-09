@@ -1,0 +1,20 @@
+# NodePort instead of routing this through Ingress like the frontend: both
+# frontend/src/api.js and useWebSocket.js hardcode "http://localhost:8080"
+# rather than reading it from an env var, so the browser has to be able to
+# reach the backend at exactly that host:port. Fixing that properly means
+# building the frontend with an env-driven API base URL — worth doing later,
+# out of scope for these manifests. This is the zero-code-change workaround:
+# kind maps host port 8080 straight to this NodePort (see README.md).
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-backend
+  namespace: echo
+spec:
+  type: NodePort
+  selector:
+    app: echo-backend
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080

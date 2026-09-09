@@ -1,0 +1,23 @@
+# 'dev' profile pulls SMS_MOCK=true and JPA_DDL_AUTO=update from
+# application-dev.yaml (already baked into the image) — that's what lets JPA
+# create the schema itself with no migration step, and keeps SMS mocked
+# instead of hitting the MSG91 key sitting in application-prod.yaml.
+# DO NOT set SPRING_PROFILES_ACTIVE=prod against this stack — that file has a
+# real-looking MSG91 API key committed in the repo, which is worth rotating
+# and moving to a real secret store independent of this k8s work.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: echo-backend-config
+  namespace: echo
+data:
+  SPRING_PROFILES_ACTIVE: "dev"
+  DB_URL: "jdbc:mysql://mysql:3306/echo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  # RedisConfig.java has no host/port, so Spring Data Redis defaults to
+  # localhost:6379 unless told otherwise — this is that override.
+  SPRING_DATA_REDIS_HOST: "redis"
+  SPRING_DATA_REDIS_PORT: "6379"
+  # SecurityConfig.java requires everything through app.security.public-urls
+  # (null by default -> NPE on boot if unset). This is the one entry actually
+  # needed for the readiness/liveness probes below to get past auth.
+  APP_SECURITY_PUBLICURLS_0: "/actuator/health"

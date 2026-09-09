@@ -1,0 +1,48 @@
+# RedisConfig.java doesn't set a host/port, so Spring Data Redis defaults to
+# localhost:6379 — fine for local dev, wrong inside a cluster. backend/configmap.yaml
+# overrides it to point here instead. No PVC: presence data is transient by
+# design (that's the whole point of it living in Redis), so emptyDir-backed
+# ephemeral storage is the honest choice, not a corner cut.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: echo
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 10
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
