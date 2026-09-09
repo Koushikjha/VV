@@ -41,3 +41,5 @@ frontend/.env.*
 *.sln
 *.sw?
 *.iml
+
+k8s/README.md
